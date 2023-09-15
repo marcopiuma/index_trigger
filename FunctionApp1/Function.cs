@@ -27,12 +27,24 @@ namespace FunctionApp1
         private UVS_V2_Wrapper uvs2;
 
 
+        private static string GetEnvironmentVariable(string name)
+        {
+            return name + ": " +
+                System.Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
+        }
+
         public Function1(IConfiguration config)
         {
-            CV_Endpoint = config["computer_vision_endpoint"];
-            CV_Key = config["computer_vision_key"];
-            Blob_ConnectionString = config["libraryConnectionString"];
-            Library_Name = config["library_name"];
+            CV_Endpoint = GetEnvironmentVariable("computer_vision_endpoint");
+            CV_Key = GetEnvironmentVariable("computer_vision_key");
+            Blob_ConnectionString = GetEnvironmentVariable("libraryConnectionString");
+            Library_Name = GetEnvironmentVariable("library_name");
+
+
+            //CV_Endpoint = config["computer_vision_endpoint"];
+            //CV_Key = config["computer_vision_key"];
+            //Blob_ConnectionString = config["libraryConnectionString"];
+            //Library_Name = config["library_name"];
             uvs = new UVS_V1_Wrapper(CV_Endpoint, CV_Key, Library_Name);
             uvs2 = new UVS_V2_Wrapper(CV_Endpoint, CV_Key, Library_Name);
         }
