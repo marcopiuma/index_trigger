@@ -93,7 +93,7 @@ namespace FunctionApp1
         }
 
         [FunctionName("BlobTrigger")]
-        public async void Run([BlobTrigger("videolibrary/{name}", Connection = "libraryConnectionString")] BlobClient myQueueItem, ILogger log)
+        public async Task Run([BlobTrigger("videolibrary/{name}", Connection = "libraryConnectionString")] BlobClient myQueueItem, ILogger log)
         {
             
             log.LogInformation($"C# Queue trigger function processed; {myQueueItem.Uri.ToString()}");
