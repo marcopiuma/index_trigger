@@ -24,6 +24,7 @@ namespace FunctionApp1
         private readonly string Library_Name;
 
         private UVS_V1_Wrapper uvs;
+        private UVS_V2_Wrapper uvs2;
 
 
         public Function1(IConfiguration config)
@@ -33,6 +34,7 @@ namespace FunctionApp1
             Blob_ConnectionString = config["libraryConnectionString"];
             Library_Name = config["library_name"];
             uvs = new UVS_V1_Wrapper(CV_Endpoint, CV_Key, Library_Name);
+            uvs2 = new UVS_V2_Wrapper(CV_Endpoint, CV_Key, Library_Name);
         }
 
         private (string,string) parseBlobUrl(string fileBlobUrl)
@@ -89,6 +91,8 @@ namespace FunctionApp1
             var docId = GenerateDocumentId(myQueueItem.Uri.ToString());
 
             var result = await uvs.addDocumentToIndex(SasUrl, docId);
+
+            await uvs2.addDocumentToIndex(SasUrl, docId);
             
             log.LogInformation($"C# sas url is {SasUrl}");
         }

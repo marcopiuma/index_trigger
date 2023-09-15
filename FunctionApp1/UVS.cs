@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json.Nodes;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 public class UVS_V2_Wrapper
@@ -14,7 +16,7 @@ public class UVS_V2_Wrapper
     private readonly string cv_Key;
     private readonly string library_Name;
 
-    private readonly string api_version = "2023-05-01-preview";
+    private readonly string api_version = "api-version=2023-05-01-preview";
 
     internal static class FeatureModelName
     {
@@ -32,12 +34,21 @@ public class UVS_V2_Wrapper
 
     internal class IndexRequestModel
     {
+
     }
 
-    private IndexRequestModel createIngestionIndexRequestBody()
+    internal class IngestionDocumentRequestModel
     {
-        return null;
+        internal string documentUrl;
+        internal string mode = "add";
     }
+
+    internal class CreateIngestionRequestModel
+    {
+        internal List<IngestionDocumentRequestModel> videos;
+        internal string documentAuthenticationKind = "none";
+    }
+
 
     public UVS_V2_Wrapper(string cv_endpoint, string cv_key, string library)
     {
@@ -52,12 +63,11 @@ public class UVS_V2_Wrapper
 
     private void setDefaultHeaders()
     {
+        _httpClient.DefaultRequestHeaders.Accept.Clear();
         _httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", cv_Key);
     }
 
     
-
-
     private async Task<bool> getIndex(string indexName)
     {
         var path = retreival_path + indexName;
@@ -75,9 +85,9 @@ public class UVS_V2_Wrapper
         var path = retreival_path + indexName;
         var url = string.Format("{0}{1}?{2}", cv_Endpoint, path, api_version);
 
-        var body = createIngestionIndexRequestBody();
+        var body = new IndexRequestModel() { };
 
-        var response = await _httpClient.PutAsync(url,null);
+        var response = await _httpClient.PutAsJsonAsync(url, body);
 
         if (response != null && response.StatusCode != System.Net.HttpStatusCode.OK)
         {
@@ -95,18 +105,47 @@ public class UVS_V2_Wrapper
        
     }
 
+
     private async Task<string> generateIngestion(string indexName, string documentUrl)
     {
-        return "";
+        Guid ingestion = Guid.NewGuid();
+        var ingestionName = ingestion.ToString();
+        string baseURI = $"retrieval/indexes/{indexName}/ingestions/{ingestionName}";
+
+        string url = $"{cv_Endpoint}{baseURI}?{api_version}";
+
+        Uri uri = new Uri(documentUrl);
+        var documentIngestion = new IngestionDocumentRequestModel()
+        {
+            documentUrl = uri.ToString(),
+        };
+
+        List<IngestionDocumentRequestModel> videosToAdd = new List<IngestionDocumentRequestModel>
+        {
+            documentIngestion
+        };
+
+        var createIngestion = new CreateIngestionRequestModel()
+        {
+            videos = videosToAdd,
+        };
+
+        var result = await _httpClient.PutAsJsonAsync(url, createIngestion);
+
+        if (result.StatusCode != System.Net.HttpStatusCode.OK)
+        {
+            return "";
+        }
+        return ingestionName;
+        
     }
 
 
-    public void addDocumentToIndex(string documentSaSUrl)
+    public async Task addDocumentToIndex(string documentSaSUrl, string documentId)
     {
-        var indexExists = generateIndexIfNotExists(library_Name);
-        var ingestion = generateIngestion(library_Name, documentSaSUrl);
-
-
+        var indexExists = await generateIndexIfNotExists(library_Name);
+        var ingestion = await generateIngestion(library_Name, documentSaSUrl);
+        return;
     }
 }
 
@@ -118,7 +157,14 @@ public class UVS_V1_Wrapper
     private readonly string cv_Endpoint;
     private readonly string cv_Key;
     private readonly string library_Name;
-    private readonly string api_version = "2023-01-15-preview";
+    private readonly string api_version = "api-version=2023-01-15-preview";
+
+    public class documentsModel
+    {
+        [JsonInclude]
+        public string documentUrl;
+    }
+
 
     public UVS_V1_Wrapper(string cv_endpoint, string cv_key, string library)
     {
@@ -137,15 +183,19 @@ public class UVS_V1_Wrapper
         var path = retreival_path + library_Name;
         var url = string.Format("{0}{1}/documents/{2}?{3}", cv_Endpoint, path, documentId, api_version);
 
+        _httpClient.DefaultRequestHeaders.Accept.Clear();
         _httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", cv_Key);
-        //_httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
+        //_httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/string"));
 
-        JsonObject ingestionDocument = new JsonObject();
-        ingestionDocument["documentUrl"] = SaSUrl;
+        Uri uri = new Uri(SaSUrl);
 
-        HttpContent content = new StringContent(ingestionDocument.ToJsonString());
+        var body = new documentsModel()
+        {
+            documentUrl = uri.ToString(),
+        };    
 
-        return await _httpClient.PutAsync(url, content);
+        var res = await _httpClient.PutAsJsonAsync(url, body);
+        return res;
 
     }
 }

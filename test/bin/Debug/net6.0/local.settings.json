@@ -1,0 +1,11 @@
+{
+    "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "libraryConnectionString": "DefaultEndpointsProtocol=https;AccountName=marcopblob;AccountKey=3zeZ/OXY/tuKYvVsO/5bQeVrr6zoBR/xTkTBR4ZBlk+LE/O8OS55aTlH/6lpt1y5wytMVSDrb11V+ASt3P3m2A==;EndpointSuffix=core.windows.net",
+    "computer_vision_endpoint": "https://mediacopilotlibrary.cognitiveservices.azure.com/",
+    "computer_vision_key": "ee5992772ecf46be9697693bab357789",
+    "library_name":  "marcoplibrary"
+    }
+}
